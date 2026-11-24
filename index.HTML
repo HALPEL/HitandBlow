@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>HIT AND BLOW</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0f1213;
+    --panel: #171c1e;
+    --inset: #111617;
+    --edge: #384145;
+    --muted: #aebbbb;
+    --text: #eef2ef;
+    --lime: #d6f879;
+    --lime-dark: #252e1b;
+    --copper: #ffc790;
+    --mono: "Bahnschrift", "Consolas", ui-monospace, monospace;
+    font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Sans", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    color: var(--text);
+    background:
+      radial-gradient(ellipse at 40% 0%, #1e272a 0, transparent 55%),
+      var(--bg);
+    min-height: 100vh;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button, summary { cursor: pointer; }
+  button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-visible {
+    outline: 2px solid var(--lime);
+    outline-offset: 3px;
+  }
+  button { min-height: 44px; }
+  a { color: inherit; }
+  .shell { width: min(100% - 48px, 1040px); margin: auto; padding: 52px 0 34px; }
+  .mast {
+    border-top: 2px solid #69787a;
+    border-bottom: 1px solid var(--edge);
+    margin-bottom: 24px;
+    padding: 12px 0 24px;
+  }
+  .mastline, .panel-heading, .footer, .dialog-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .mastline, .footer { color: var(--muted); font-size: .8rem; }
+  .stage { color: var(--lime); font-weight: 650; }
+  .wordmark {
+    margin: 12px 0 4px;
+    display: flex;
+    align-items: baseline;
+    gap: clamp(7px, 2vw, 22px);
+    font: 800 clamp(2.15rem, 8vw, 5.4rem)/1 var(--mono);
+    letter-spacing: -.055em;
+    white-space: nowrap;
+  }
+  .and-label, .and-trigger {
+    font: inherit;
+    font-size: .53em;
+    letter-spacing: -.035em;
+    color: #bfcac7;
+  }
+  .and-trigger {
+    position: relative;
+    background: transparent;
+    padding: 4px 7px 6px;
+    margin: 0 -3px;
+    border: 1px solid transparent;
+    border-bottom-color: #596766;
+    border-radius: 4px;
+    min-height: 44px;
+    line-height: 1;
+  }
+  .and-trigger::after {
+    content: "";
+    display: inline-block;
+    margin-left: .18em;
+    width: .14em;
+    height: .14em;
+    border-bottom: 1px solid currentColor;
+    border-right: 1px solid currentColor;
+    vertical-align: .17em;
+    transform: rotate(45deg);
+  }
+  .and-trigger:hover, .and-trigger[aria-expanded="true"] {
+    background: var(--lime-dark);
+    color: var(--lime);
+    border-color: #667447;
+  }
+  .and-trigger[aria-expanded="true"]::after { transform: rotate(225deg); }
+  .objective { margin: 12px 0 0; line-height: 1.65; color: var(--muted); font-size: .93rem; }
+  .board {
+    display: grid;
+    align-items: start;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.3fr);
+    grid-template-rows: max-content 1fr;
+    grid-template-areas: "control log" "notes log";
+    gap: 12px;
+  }
+  .panel { min-width: 0; background: var(--panel); border: 1px solid var(--edge); border-radius: 9px; }
+  .control { grid-area: control; padding: 19px; }
+  .startup-message { padding: 15px; color: var(--muted); line-height: 1.65; }
+  .ledger { grid-area: log; overflow: hidden; min-height: 200px; }
+  .notes { grid-area: notes; overflow: hidden; }
+  h2 { font-size: 1rem; margin: 0; font-weight: 700; letter-spacing: .04em; }
+  .step, .count { font: .85rem var(--mono); color: var(--muted); }
+  .step { color: var(--lime); }
+  .instruction, .legend, .empty, details p, dd { font-size: .85rem; line-height: 1.65; }
+  .instruction { margin: 13px 0 11px; color: var(--muted); }
+  .example {
+    display: inline-block;
+    background: var(--inset);
+    color: var(--lime);
+    border: 1px solid #535f41;
+    border-radius: 4px;
+    min-height: 44px;
+    padding: 3px 12px;
+    margin: 0 2px;
+    font: 650 1rem var(--mono);
+    letter-spacing: .08em;
+  }
+  .entry { display: flex; gap: 8px; align-items: stretch; }
+  .code {
+    width: 100%;
+    min-width: 0;
+    min-height: 55px;
+    border: 1px solid #65746f;
+    border-radius: 5px;
+    background: var(--inset);
+    text-align: center;
+    font: 700 1.75rem var(--mono);
+    letter-spacing: .25em;
+    padding: 5px 8px 5px calc(8px + .25em);
+  }
+  .code::placeholder { color: #82928e; opacity: 1; }
+  .button {
+    border-radius: 5px;
+    border: 1px solid var(--edge);
+    background: var(--inset);
+    padding: 9px 14px;
+    white-space: nowrap;
+    font-size: .88rem;
+    font-weight: 650;
+  }
+  .button:hover, .example:hover { border-color: var(--lime); }
+  .primary { color: #1b240e; background: var(--lime); border-color: var(--lime); }
+  .primary:hover { background: #e2ffa3; }
+  .full { width: 100%; }
+  .feedback { margin: 9px 0 5px; min-height: 1.55em; font-size: .82rem; color: var(--lime); line-height: 1.55; }
+  .feedback.error { color: var(--copper); }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 12px;
+    color: var(--muted);
+    margin: 10px 0 0;
+  }
+  .legend strong, .hit { color: var(--lime); }
+  .legend span + span strong, .blow { color: var(--copper); }
+  .ledger .panel-heading { padding: 16px 16px 15px; }
+  table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: center; }
+  thead { background: #202729; }
+  th, td { padding: 12px 4px; border-top: 1px solid var(--edge); }
+  thead th { font-size: clamp(.69rem, 2.8vw, .83rem); letter-spacing: .01em; color: var(--muted); }
+  thead th:first-child { width: 26%; }
+  thead th.and-col { color: var(--lime); }
+  tbody th { color: var(--text); font: 700 clamp(.95rem, 3.5vw, 1.17rem) var(--mono); letter-spacing: .085em; }
+  .score { display: inline-flex; gap: .26em; align-items: baseline; white-space: nowrap; font: 650 clamp(.78rem, 3.45vw, 1.05rem) var(--mono); }
+  .score.perfect { background: var(--lime-dark); padding: 3px 4px; border-radius: 4px; outline: 1px solid #52643c; }
+  .and-col { background: #20291d; }
+  tbody tr.is-selected th, tbody tr.is-selected td { box-shadow: inset 0 -2px #768c42; background-color: #2a3322; }
+  .empty { margin: 0; padding: 22px 16px; color: var(--muted); text-align: center; }
+  details + details { border-top: 1px solid var(--edge); }
+  summary { min-height: 44px; padding: 12px 15px; font-size: .86rem; font-weight: 650; }
+  summary::marker { color: var(--lime); }
+  details p, dl { margin: 3px 15px 13px; }
+  .rule-list { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 7px 8px; align-items: baseline; }
+  dt { font-size: .85rem; font-weight: 650; }
+  dd { color: var(--muted); margin: 0; }
+  .hint { color: var(--muted); }
+  .footer { margin-top: 16px; line-height: 1.6; }
+  .connection { display: inline-flex; align-items: center; gap: 7px; }
+  .connection::before { content: ""; width: 6px; height: 6px; background: var(--lime); border-radius: 50%; }
+  .win-code { color: var(--lime); font: 700 2.6rem var(--mono); letter-spacing: .18em; margin: 9px 0 13px; }
+  .win-line { margin: 17px 0; line-height: 1.6; }
+  .win-rules { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; margin: 0; }
+  dialog {
+    width: min(calc(100% - 24px), 410px);
+    border: 1px solid #66746e;
+    border-radius: 9px;
+    color: var(--text);
+    background: var(--panel);
+    padding: 18px;
+  }
+  dialog::backdrop { background: rgb(4 7 6 / 76%); }
+  .close { padding-inline: 10px; }
+  .confirm-field { display: block; margin-top: 12px; font-size: .84rem; color: var(--muted); }
+  .confirm-field > span { display: block; margin-bottom: 6px; }
+  .select-row {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 1.6fr);
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: .85rem;
+  }
+  select {
+    border: 1px solid #65746f;
+    border-radius: 5px;
+    background: var(--inset);
+    min-height: 44px;
+    padding: 4px 8px;
+  }
+  .sr-only {
+    position: absolute;
+    padding: 0;
+    margin: -1px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 720px) {
+    .shell { width: calc(100% - 24px); padding-top: 23px; }
+    .mast { padding-bottom: 15px; margin-bottom: 14px; }
+    .board { grid-template-columns: minmax(0, 1fr); grid-template-areas: "control" "notes" "log"; grid-template-rows: none; gap: 8px; }
+    .control { padding: 13px; }
+    .ledger { min-height: 0; }
+    .ledger .panel-heading { padding: 12px 13px; }
+    .objective { margin-top: 8px; }
+  }
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="mast">
+    <div class="mastline">
+      <span class="stage" id="stage-label">練習</span>
+      <span>照合端末</span>
+    </div>
+    <h1 class="sr-only">HIT AND BLOW</h1>
+    <div class="wordmark">
+      <span aria-hidden="true">HIT</span><span class="and-label" aria-hidden="true" id="and-label">AND</span><button type="button" class="and-trigger" id="and-trigger" aria-expanded="false" aria-controls="ledger-table" hidden>AND</button><span aria-hidden="true">BLOW</span>
+    </div>
+    <p class="objective" id="objective" hidden>数字と桁の判定を、二つの入力で比べる。</p>
+  </header>
+
+  <p class="panel startup-message" id="startup-message">この画面でゲームが表示されない場合は、HTMLファイルをダウンロードし、ChromeやEdgeなどのブラウザで開いてください。</p>
+  <div class="board" id="game-board" hidden>
+    <section class="panel control" id="play-panel" aria-labelledby="probe-heading">
+      <div class="panel-heading">
+        <h2 id="probe-heading">入力照合</h2>
+        <span class="step" id="step">1 / 2</span>
+      </div>
+      <p class="instruction" id="practice-prompt">重複なしの4桁。例 <button type="button" class="example" id="example-code">5013</button></p>
+      <p class="instruction" id="main-prompt" hidden>重複なしの4桁。先頭に0を使えます。</p>
+      <form id="probe-form" novalidate>
+        <label class="sr-only" for="probe-code">照合する4桁</label>
+        <div class="entry">
+          <input class="code" id="probe-code" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="····">
+          <button class="button primary" type="submit">照合</button>
+        </div>
+      </form>
+      <p class="legend"><span><strong>H</strong> 数字も位置も一致</span><span><strong>B</strong> 数字だけ一致</span></p>
+      <p id="feedback" class="feedback" role="status"></p>
+      <button class="button primary full" type="button" id="start-main" hidden>本題に進む</button>
+      <button class="button full" type="button" id="open-confirm" hidden>暗証番号と規則を確定</button>
+    </section>
+
+    <section class="panel control" id="win-panel" hidden aria-labelledby="win-heading">
+      <h2 id="win-heading" tabindex="-1">照合完了</h2>
+      <p class="win-code" id="win-code"></p>
+      <dl class="win-rules" id="win-rules"></dl>
+      <p class="win-line">二台とも、正しく答えていました。</p>
+      <button type="button" class="button full" id="restart">練習からやり直す</button>
+    </section>
+
+    <aside class="panel notes" id="notes" hidden aria-label="規則とヒント">
+      <details id="rules">
+        <summary>照合規則</summary>
+        <p>三つの規則を一台ずつが使っています。</p>
+        <dl class="rule-list">
+          <dt>通常</dt><dd>入力を暗証番号とそのまま比べる。</dd>
+          <dt>逆順</dt><dd>暗証番号を逆順にしてから、入力と比べる。</dd>
+          <dt>＋1</dt><dd>入力の全桁を一つずつ進めてから、暗証番号と比べる。9の次は0。</dd>
+        </dl>
+      </details>
+      <details id="hint">
+        <summary>ヒント</summary>
+        <p class="hint">表示されている結果欄の数を確認してください。</p>
+        <details id="hint-more">
+          <summary>もう一つ見る</summary>
+          <p class="hint">暗証番号を逆順にし、通常と逆順の担当も入れ替えると、左右二台の判定はどうなるでしょう？</p>
+        </details>
+      </details>
+    </aside>
+
+    <section class="panel ledger" aria-labelledby="ledger-heading">
+      <div class="panel-heading">
+        <h2 id="ledger-heading">照合履歴</h2>
+        <span class="count" id="count">0 件</span>
+      </div>
+      <table id="ledger-table" aria-labelledby="ledger-heading">
+        <thead><tr id="ledger-columns"></tr></thead>
+        <tbody id="ledger-rows"></tbody>
+      </table>
+      <p class="empty" id="ledger-empty">照合すると、ここに結果が表示されます。</p>
+    </section>
+  </div>
+
+  <footer class="footer" id="game-footer" hidden>
+    <span class="connection" id="connection">接続中 1 台 ／ 表示中 1 台</span>
+  </footer>
+  <p id="and-announcement" class="sr-only" role="status"></p>
+</main>
+
+<dialog id="confirm-dialog" aria-labelledby="confirm-title">
+  <form id="confirm-form" novalidate>
+    <div class="dialog-top">
+      <h2 id="confirm-title">暗証番号と規則を確定</h2>
+      <button class="button close" type="button" id="close-confirm" autofocus>戻る</button>
+    </div>
+    <label class="confirm-field" for="confirm-code">
+      <span>暗証番号</span>
+      <input class="code" id="confirm-code" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="····">
+    </label>
+    <div id="assignments"></div>
+    <p class="feedback" id="confirm-feedback" role="status"></p>
+    <button class="button primary full" type="submit">確定する</button>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+
+const practice = { secret: "5072", probes: ["5013", "0758"] };
+const puzzle = {
+  secret: "7316",
+  machines: [
+    { name: "HIT機", rule: "normal" },
+    { name: "AND機", rule: "plus" },
+    { name: "BLOW機", rule: "reverse" }
+  ]
+};
+const rules = { normal: "通常", reverse: "逆順", plus: "＋1" };
+const get = id => document.getElementById(id);
+const probeInput = get("probe-code");
+const confirmInput = get("confirm-code");
+const dialog = get("confirm-dialog");
+const andTrigger = get("and-trigger");
+const andName = "AND機";
+
+let stage = "practice";
+let andVisible = false;
+let history = [];
+
+function score(guess, secret, rule) {
+  if (rule === "reverse") secret = [...secret].reverse().join("");
+  if (rule === "plus") guess = [...guess].map(digit => (Number(digit) + 1) % 10).join("");
+
+  let hit = 0;
+  let shared = 0;
+  for (const [index, digit] of [...guess].entries()) {
+    if (digit === secret[index]) hit++;
+    if (secret.includes(digit)) shared++;
+  }
+  return { hit, blow: shared - hit };
+}
+
+function validate(code) {
+  if (!/^[0-9]{4}$/.test(code)) return "数字を4桁入力してください。";
+  if (new Set(code).size !== 4) return "同じ数字は一度だけ使えます。";
+  return "";
+}
+
+function feedback(id, message = "", error = false) {
+  const target = get(id);
+  target.textContent = message;
+  target.classList.toggle("error", error);
+}
+
+function visibleMachines() {
+  if (stage === "practice") return [{ name: "通常照合", rule: "normal" }];
+  return puzzle.machines.filter(machine => machine.name !== andName || andVisible);
+}
+
+function showProbeResult(item, recorded = false) {
+  const result = visibleMachines().map(machine => {
+    const { hit, blow } = item.scores[machine.rule];
+    const resultName = stage === "practice" ? "" : machine.name + " ";
+    return resultName + hit + "H " + blow + "B";
+  });
+  const code = item.code + (recorded ? "（記録済み）" : "");
+  feedback("feedback", code + " → " + result.join(" ／ "));
+}
+
+function renderHistory(selected = "") {
+  const columns = visibleMachines();
+  const headings = document.createDocumentFragment();
+
+  for (const name of ["入力", ...columns.map(machine => machine.name)]) {
+    const cell = document.createElement("th");
+    cell.scope = "col";
+    cell.textContent = name;
+    if (name === andName) cell.classList.add("and-col");
+    headings.append(cell);
+  }
+  get("ledger-columns").replaceChildren(headings);
+
+  const rows = document.createDocumentFragment();
+  for (const item of [...history].reverse()) {
+    const row = document.createElement("tr");
+    row.id = "entry-" + item.code;
+    row.classList.toggle("is-selected", item.code === selected);
+
+    const code = row.appendChild(document.createElement("th"));
+    code.scope = "row";
+    code.textContent = item.code;
+
+    for (const machine of columns) {
+      const { hit, blow } = item.scores[machine.rule];
+      const cell = row.insertCell();
+      if (machine.name === andName) cell.classList.add("and-col");
+      const result = cell.appendChild(document.createElement("span"));
+      result.className = "score";
+      result.classList.toggle("perfect", hit === 4);
+      result.setAttribute("aria-label", hit + " ヒット、" + blow + " ブロー");
+
+      const hitText = result.appendChild(document.createElement("span"));
+      hitText.className = "hit";
+      hitText.textContent = hit + "H";
+      const blowText = result.appendChild(document.createElement("span"));
+      blowText.className = "blow";
+      blowText.textContent = blow + "B";
+    }
+    rows.append(row);
+  }
+  get("ledger-rows").replaceChildren(rows);
+  get("count").textContent = history.length + " 件";
+  get("ledger-empty").hidden = history.length !== 0;
+  get("connection").textContent = stage === "practice"
+    ? "接続中 1 台 ／ 表示中 1 台"
+    : "接続中 3 台 ／ 表示中 " + columns.length + " 台";
+}
+
+function displayPracticeStep() {
+  const completed = history.length >= practice.probes.length;
+  const example = practice.probes.find(code => !history.some(item => item.code === code));
+  get("step").textContent = Math.min(history.length + 1, practice.probes.length) + " / " + practice.probes.length;
+  get("practice-prompt").hidden = completed;
+  get("main-prompt").hidden = !completed;
+  get("start-main").hidden = !completed;
+  if (example) {
+    const button = get("example-code");
+    button.textContent = example;
+    button.setAttribute("aria-label", "例 " + example + " を照合");
+  }
+}
+
+function displayStage(nextStage) {
+  stage = nextStage;
+  const training = stage === "practice";
+  const won = stage === "won";
+  get("stage-label").textContent = training ? "練習" : won ? "完了" : "本試験";
+  get("objective").textContent = training
+    ? "数字と桁の判定を、二つの入力で比べる。"
+    : won ? "" : "4桁の暗証番号と、各機の照合規則を突き止める。";
+  get("objective").hidden = won;
+  get("and-label").hidden = !training;
+  andTrigger.hidden = training;
+  andTrigger.setAttribute("aria-expanded", String(andVisible));
+  get("play-panel").hidden = won;
+  get("win-panel").hidden = !won;
+  get("main-prompt").hidden = training;
+  get("step").hidden = !training;
+  get("notes").hidden = training || won;
+  get("open-confirm").hidden = training;
+  get("practice-prompt").hidden = !training;
+  get("start-main").hidden = true;
+  probeInput.value = "";
+  feedback("feedback");
+  if (training) displayPracticeStep();
+  renderHistory();
+}
+
+function submitProbe() {
+  const code = probeInput.value;
+  const issue = validate(code);
+  if (issue) {
+    feedback("feedback", issue, true);
+    probeInput.focus();
+    return;
+  }
+  const existing = history.find(item => item.code === code);
+  if (existing) {
+    showProbeResult(existing, true);
+    renderHistory(code);
+    const row = get("entry-" + code);
+    const bounds = row.getBoundingClientRect();
+    if (bounds.top < 0 || bounds.bottom > window.innerHeight) row.scrollIntoView({ block: "nearest" });
+    return;
+  }
+
+  const secret = stage === "practice" ? practice.secret : puzzle.secret;
+  const ruleKeys = stage === "practice" ? ["normal"] : Object.keys(rules);
+  const scores = Object.fromEntries(ruleKeys.map(rule => [rule, score(code, secret, rule)]));
+  const item = { code, scores };
+  history.push(item);
+  if (stage === "practice") displayPracticeStep();
+  showProbeResult(item);
+  probeInput.value = "";
+  if (matchMedia("(pointer: coarse)").matches) probeInput.blur();
+  renderHistory(code);
+}
+
+for (const input of [probeInput, confirmInput]) {
+  input.addEventListener("input", () => {
+    const clean = input.value.normalize("NFKC").replace(/[^0-9]/g, "").slice(0, 4);
+    if (clean !== input.value) input.value = clean;
+  });
+}
+
+get("probe-form").addEventListener("submit", event => {
+  event.preventDefault();
+  submitProbe();
+});
+get("example-code").addEventListener("click", event => {
+  probeInput.value = event.currentTarget.textContent;
+  submitProbe();
+  const next = get("start-main");
+  if (!next.hidden) next.focus({ preventScroll: true });
+});
+get("start-main").addEventListener("click", () => {
+  history = [];
+  displayStage("main");
+  get("open-confirm").focus({ preventScroll: true });
+});
+andTrigger.addEventListener("click", () => {
+  andVisible = !andVisible;
+  andTrigger.setAttribute("aria-expanded", String(andVisible));
+  feedback("feedback");
+  renderHistory();
+  get("and-announcement").textContent = andVisible
+    ? "AND機の判定を表示しました。照合履歴は " + history.length + " 件あります。"
+    : "AND機の判定を閉じました。";
+});
+
+for (const [index, machine] of puzzle.machines.entries()) {
+  const label = document.createElement("label");
+  label.className = "select-row";
+  const name = label.appendChild(document.createElement("span"));
+  name.textContent = machine.name;
+  const select = label.appendChild(document.createElement("select"));
+  select.id = "machine-" + index;
+  select.add(new Option("規則を選ぶ", ""));
+  for (const [key, name] of Object.entries(rules)) select.add(new Option(name, key));
+  get("assignments").append(label);
+}
+
+get("open-confirm").addEventListener("click", () => {
+  if (!andVisible) {
+    feedback("feedback", "確定には、接続中の全台の規則が必要です。", true);
+    return;
+  }
+  feedback("confirm-feedback");
+  if (!confirmInput.value && !validate(probeInput.value)) confirmInput.value = probeInput.value;
+  dialog.showModal();
+});
+
+get("close-confirm").addEventListener("click", () => dialog.close());
+get("confirm-form").addEventListener("submit", event => {
+  event.preventDefault();
+  const code = confirmInput.value;
+  const issue = validate(code);
+  if (issue) {
+    feedback("confirm-feedback", issue, true);
+    confirmInput.focus();
+    return;
+  }
+  const selected = puzzle.machines.map((_, index) => get("machine-" + index).value);
+  if (selected.includes("") || new Set(selected).size !== puzzle.machines.length) {
+    feedback("confirm-feedback", "三台に、それぞれ異なる規則を選んでください。", true);
+    return;
+  }
+  if (code !== puzzle.secret || puzzle.machines.some((machine, index) => machine.rule !== selected[index])) {
+    feedback("confirm-feedback", "暗証番号と照合規則の組が一致しません。", true);
+    return;
+  }
+
+  dialog.close();
+  get("win-code").textContent = code;
+  const answer = get("win-rules");
+  answer.replaceChildren();
+  for (const machine of puzzle.machines) {
+    const term = answer.appendChild(document.createElement("dt"));
+    term.textContent = machine.name;
+    const value = answer.appendChild(document.createElement("dd"));
+    value.textContent = rules[machine.rule];
+  }
+  displayStage("won");
+  get("win-heading").focus();
+});
+
+get("restart").addEventListener("click", () => {
+  history = [];
+  andVisible = false;
+  get("confirm-form").reset();
+  for (const detail of get("notes").querySelectorAll("details")) detail.open = false;
+  get("and-announcement").textContent = "";
+  displayStage("practice");
+  get("example-code").focus();
+});
+
+displayStage("practice");
+get("game-board").hidden = false;
+get("game-footer").hidden = false;
+get("startup-message").hidden = true;
+</script>
+</body>
+</html>
+
