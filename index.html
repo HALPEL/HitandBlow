@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>HIT AND BLOW</title>
+<title>Hit and Blow .</title>
 <style>
   :root {
     color-scheme: dark;
@@ -32,8 +32,8 @@
     min-height: 100vh;
   }
   button, input, select { font: inherit; color: inherit; }
-  button, summary { cursor: pointer; }
-  button:focus-visible, input:focus-visible, summary:focus-visible, select:focus-visible {
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible {
     outline: 2px solid var(--lime);
     outline-offset: 3px;
   }
@@ -46,14 +46,16 @@
     margin-bottom: 24px;
     padding: 12px 0 24px;
   }
-  .mastline, .panel-heading, .footer, .dialog-top {
+  .panel-heading, .footer, .dialog-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
   }
   .mastline, .footer { color: var(--muted); font-size: .8rem; }
-  .stage { color: var(--lime); font-weight: 650; }
+  .mastline { margin: 0; display: flex; justify-content: space-between; align-items: center; }
+  .mastline > span { margin-left: auto; }
+  .mode-return { order: -1; }
   .wordmark {
     margin: 12px 0 4px;
     display: flex;
@@ -67,9 +69,25 @@
     font: inherit;
     font-size: .53em;
     letter-spacing: -.035em;
-    color: #bfcac7;
+    color: var(--lime);
   }
-  .and-label.is-active { color: var(--lime); }
+  .title-punctuation { color: transparent; }
+  .title-punctuation::selection { color: var(--text); background: #43514c; }
+  .mode-dot {
+    line-height: 1;
+    padding: 0 .15em .13em;
+    min-width: 44px;
+    min-height: 44px;
+    border: 1px solid #67794a;
+    border-radius: 5px;
+    background: var(--lime-dark);
+    color: var(--lime);
+    font: inherit;
+    font-size: .67em;
+  }
+  .mode-dot:hover { border-color: var(--lime); }
+  .hard-title { color: var(--copper); font-size: clamp(1.48rem, 6.5vw, 4.7rem); }
+  .hard-title .and-label { color: var(--copper); }
   .objective { margin: 12px 0 0; line-height: 1.65; color: var(--muted); font-size: .93rem; }
   .board {
     display: grid;
@@ -85,22 +103,9 @@
   .ledger { grid-area: log; overflow: hidden; min-height: 200px; }
   .notes { grid-area: notes; overflow: hidden; }
   h2 { font-size: 1rem; margin: 0; font-weight: 700; letter-spacing: .04em; }
-  .step, .count { font: .85rem var(--mono); color: var(--muted); }
-  .step { color: var(--lime); }
-  .instruction, .legend, .empty, details p, dd { font-size: .85rem; line-height: 1.65; }
+  .count { font: .85rem var(--mono); color: var(--muted); }
+  .instruction, .legend, .empty, dd { font-size: .85rem; line-height: 1.65; }
   .instruction { margin: 13px 0 11px; color: var(--muted); }
-  .example {
-    display: inline-block;
-    background: var(--inset);
-    color: var(--lime);
-    border: 1px solid #535f41;
-    border-radius: 4px;
-    min-height: 44px;
-    padding: 3px 12px;
-    margin: 0 2px;
-    font: 650 1rem var(--mono);
-    letter-spacing: .08em;
-  }
   .entry { display: flex; gap: 8px; align-items: stretch; }
   .code {
     width: 100%;
@@ -124,7 +129,7 @@
     font-size: .88rem;
     font-weight: 650;
   }
-  .button:hover, .example:hover { border-color: var(--lime); }
+  .button:hover { border-color: var(--lime); }
   .primary { color: #1b240e; background: var(--lime); border-color: var(--lime); }
   .primary:hover { background: #e2ffa3; }
   .full { width: 100%; }
@@ -150,19 +155,17 @@
   .score { display: inline-flex; gap: .26em; align-items: baseline; white-space: nowrap; font: 650 clamp(.78rem, 3.45vw, 1.05rem) var(--mono); }
   .score.perfect { background: var(--lime-dark); padding: 3px 4px; border-radius: 4px; outline: 1px solid #52643c; }
   .and-col { background: #20291d; }
+  .special-col { background: #28232a; }
+  thead th.special-col { color: var(--copper); }
+  .hard-rules { grid-template-columns: 4.25rem minmax(0, 1fr); }
   tbody tr.is-selected th, tbody tr.is-selected td { box-shadow: inset 0 -2px #768c42; background-color: #2a3322; }
   .empty { margin: 0; padding: 22px 16px; color: var(--muted); text-align: center; }
   .rule-heading { padding: 12px 15px 0; }
   .rule-intro { color: var(--muted); margin: 4px 15px 7px; font-size: .85rem; line-height: 1.5; }
-  .notes > details { border-top: 1px solid var(--edge); }
-  summary { min-height: 44px; padding: 12px 15px; font-size: .86rem; font-weight: 650; }
-  summary::marker { color: var(--lime); }
-  details p, dl { margin: 3px 15px 13px; }
-  .rule-list { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 4px 8px; align-items: baseline; }
+  .rule-list { margin: 3px 15px 13px; display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 4px 8px; align-items: baseline; }
   .rule-list dd { line-height: 1.5; }
   dt { font-size: .85rem; font-weight: 650; }
   dd { color: var(--muted); margin: 0; }
-  .hint { color: var(--muted); }
   .footer { margin-top: 16px; line-height: 1.6; }
   .connection { display: inline-flex; align-items: center; gap: 7px; }
   .connection::before { content: ""; width: 6px; height: 6px; background: var(--lime); border-radius: 50%; }
@@ -215,6 +218,12 @@
     .ledger { min-height: 0; }
     .ledger .panel-heading { padding: 12px 13px; }
     .objective { margin-top: 8px; }
+    .hard-ledger th, .hard-ledger td { padding-inline: 2px; }
+    .hard-ledger thead th { font-size: .66rem; overflow-wrap: anywhere; }
+    .hard-ledger thead th:first-child { width: 17%; }
+    .hard-ledger tbody th { font-size: .84rem; }
+    .hard-ledger .score { font-size: .72rem; gap: .15em; }
+    .hard-ledger .score.perfect { padding-inline: 2px; }
   }
 </style>
 </head>
@@ -222,25 +231,25 @@
 <main class="shell">
   <header class="mast">
     <div class="mastline">
-      <span class="stage" id="stage-label">練習</span>
       <span>照合端末</span>
+      <button class="button mode-return" id="return-normal" type="button" hidden>通常モードに戻る</button>
     </div>
-    <h1 class="sr-only">HIT AND BLOW</h1>
-    <div class="wordmark">
-      <span aria-hidden="true">HIT</span><span class="and-label" aria-hidden="true" id="and-label">AND</span><span aria-hidden="true">BLOW</span>
+    <h1 class="sr-only" id="game-title">Hit and Blow .</h1>
+    <div class="wordmark" id="normal-wordmark">
+      <span aria-hidden="true">Hit</span> <span class="and-label" aria-hidden="true">and</span> <span aria-hidden="true">Blow</span> <span class="title-punctuation" id="locked-dot" aria-hidden="true">.</span>
+      <button class="mode-dot" id="open-hard" type="button" aria-label="裏モードを開く" hidden>.</button>
     </div>
-    <p class="objective" id="objective" hidden>数字と桁の判定を、二つの入力で比べる。</p>
+    <div class="wordmark hard-title" id="hard-wordmark" aria-hidden="true" hidden>
+      <span>Hit</span> <span class="and-label">and</span> <span>Blowhard</span> <span>!</span>
+    </div>
+    <p class="objective" id="objective">4桁の暗証番号と、各機の照合規則を突き止める。</p>
   </header>
 
   <p class="panel startup-message" id="startup-message">この画面でゲームが表示されない場合は、HTMLファイルをダウンロードし、ChromeやEdgeなどのブラウザで開いてください。</p>
   <div class="board" id="game-board" hidden>
     <section class="panel control" id="play-panel" aria-labelledby="probe-heading">
-      <div class="panel-heading">
-        <h2 id="probe-heading">入力照合</h2>
-        <span class="step" id="step">1 / 2</span>
-      </div>
-      <p class="instruction" id="practice-prompt">重複なしの4桁。例 <button type="button" class="example" id="example-code">5013</button></p>
-      <p class="instruction" id="main-prompt" hidden>重複なしの4桁。先頭に0を使えます。</p>
+      <h2 id="probe-heading" tabindex="-1">入力照合</h2>
+      <p class="instruction" id="input-rules">重複なしの4桁。先頭に0を使えます。</p>
       <form id="probe-form" novalidate>
         <label class="sr-only" for="probe-code">照合する4桁</label>
         <div class="entry">
@@ -250,33 +259,32 @@
       </form>
       <p class="legend"><span><strong>H</strong> 数字も位置も一致</span><span><strong>B</strong> 数字だけ一致</span></p>
       <p id="feedback" class="feedback" role="status"></p>
-      <button class="button primary full" type="button" id="start-main" hidden>本題に進む</button>
-      <button class="button full" type="button" id="open-confirm" hidden>暗証番号と規則を確定</button>
+      <button class="button full" type="button" id="open-confirm">暗証番号と規則を確定</button>
     </section>
 
     <section class="panel control" id="win-panel" hidden aria-labelledby="win-heading">
       <h2 id="win-heading" tabindex="-1">照合完了</h2>
       <p class="win-code" id="win-code"></p>
       <dl class="win-rules" id="win-rules"></dl>
-      <p class="win-line">三台とも、正しく答えていました。</p>
-      <button type="button" class="button full" id="restart">練習からやり直す</button>
+      <p class="win-line" id="win-message">三台とも、正しく答えていました。</p>
+      <button type="button" class="button full" id="restart">もう一度遊ぶ</button>
     </section>
 
-    <aside class="panel notes" id="notes" hidden aria-label="規則とヒント">
+    <aside class="panel notes" id="notes" aria-labelledby="rules">
       <h2 class="rule-heading" id="rules">照合規則</h2>
-      <p class="rule-intro">三つの規則を一台ずつが使っています。</p>
+      <p class="rule-intro" id="rule-intro">三つの規則を一台ずつが使っています。</p>
       <dl class="rule-list">
         <dt>通常</dt><dd>入力を暗証番号とそのまま比べる。</dd>
         <dt>逆順</dt><dd>暗証番号を逆順にして入力と比べる。</dd>
         <dt>＋1</dt><dd>入力の各桁に1を足して照合。9の次は0。</dd>
       </dl>
-      <details id="hint">
-        <summary>ヒント</summary>
-        <p class="hint">同じ4桁を逆順に並べて、元の入力と判定を見比べてみよう。</p>
-      </details>
+      <dl class="rule-list hard-rules" id="hard-rules" hidden>
+        <dt>嘘つ機</dt><dd>Hには本来のBを、Bには一致しなかった数字の数を出す。</dd>
+        <dt>ホラ吹機</dt><dd>標準のH/Bで成立する14通りから、でたらめに一組を出す。</dd>
+      </dl>
     </aside>
 
-    <section class="panel ledger" aria-labelledby="ledger-heading">
+    <section class="panel ledger" id="ledger" aria-labelledby="ledger-heading">
       <div class="panel-heading">
         <h2 id="ledger-heading">照合履歴</h2>
         <span class="count" id="count">0 件</span>
@@ -290,7 +298,7 @@
   </div>
 
   <footer class="footer" id="game-footer" hidden>
-    <span class="connection" id="connection">接続中 1 台</span>
+    <span class="connection" id="connection">接続中 3 台</span>
   </footer>
 </main>
 
@@ -313,24 +321,67 @@
 <script>
 "use strict";
 
-const practice = { secret: "5072", probes: ["5013", "0758"] };
-const puzzle = {
-  secret: "7316",
+const normalPuzzle = {
   machines: [
     { name: "HIT機", rule: "normal" },
     { name: "AND機", rule: "plus" },
     { name: "BLOW機", rule: "reverse" }
   ]
 };
+const hardPuzzle = {
+  machines: [
+    { name: "HIT機", rule: "reverse" },
+    { name: "AND機", rule: "normal" },
+    { name: "BLOW機", rule: "plus" }
+  ]
+};
+const specialMachines = [
+  { name: "嘘つ機", rule: "lie", description: "見当違いの判定" },
+  { name: "ホラ吹機", rule: "random", description: "でたらめ" }
+];
 const rules = { normal: "通常", reverse: "逆順", plus: "＋1" };
+const legalPairs = [];
+for (let hit = 0; hit <= 4; hit++) {
+  for (let blow = 0; blow <= 4 - hit; blow++) {
+    if (hit !== 3 || blow !== 1) legalPairs.push({ hit, blow });
+  }
+}
+const unlockKey = "hitandblow.normal-clears.v1";
+const requiredClears = 3;
 const get = id => document.getElementById(id);
 const probeInput = get("probe-code");
 const confirmInput = get("confirm-code");
 const dialog = get("confirm-dialog");
 const andName = "AND機";
 
-let stage = "practice";
+let puzzle = normalPuzzle;
+let secret = "";
+const lastAnswers = new Map();
 let history = [];
+let normalClears = readNormalClears();
+
+function readNormalClears() {
+  try {
+    const stored = Number.parseInt(localStorage.getItem(unlockKey), 10);
+    return Math.min(requiredClears, Math.max(0, stored || 0));
+  } catch {
+    return 0;
+  }
+}
+
+function countNormalClear() {
+  normalClears = Math.max(normalClears, readNormalClears());
+  if (normalClears < requiredClears) {
+    normalClears++;
+    try { localStorage.setItem(unlockKey, String(normalClears)); } catch {}
+  }
+  get("locked-dot").hidden = normalClears >= requiredClears;
+  get("open-hard").hidden = normalClears < requiredClears;
+}
+
+function currentMachines() {
+  return puzzle === hardPuzzle ? [...puzzle.machines, ...specialMachines] : puzzle.machines;
+}
 
 function score(guess, secret, rule) {
   if (rule === "reverse") secret = [...secret].reverse().join("");
@@ -338,16 +389,46 @@ function score(guess, secret, rule) {
 
   let hit = 0;
   let shared = 0;
+  const available = [...secret];
   for (const [index, digit] of [...guess].entries()) {
     if (digit === secret[index]) hit++;
-    if (secret.includes(digit)) shared++;
+    const match = available.indexOf(digit);
+    if (match !== -1) {
+      shared++;
+      available.splice(match, 1);
+    }
   }
   return { hit, blow: shared - hit };
 }
 
+function hasRepeatedDigit(code) {
+  return new Set(code).size !== code.length;
+}
+
+function isPalindrome(code) {
+  return code === [...code].reverse().join("");
+}
+
+function drawAnswer(mode) {
+  const previous = lastAnswers.get(mode);
+  let answer;
+  do {
+    answer = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+  } while (
+    answer === previous ||
+    (mode === hardPuzzle ? isPalindrome(answer) : hasRepeatedDigit(answer))
+  );
+  lastAnswers.set(mode, answer);
+  return answer;
+}
+
 function validate(code) {
   if (!/^[0-9]{4}$/.test(code)) return "数字を4桁入力してください。";
-  if (new Set(code).size !== 4) return "同じ数字は一度だけ使えます。";
+  if (puzzle === hardPuzzle) {
+    if (isPalindrome(code)) return "前から読んでも後ろから読んでも同じ数字は使えません。";
+  } else if (hasRepeatedDigit(code)) {
+    return "同じ数字は一度だけ使えます。";
+  }
   return "";
 }
 
@@ -357,23 +438,17 @@ function feedback(id, message = "", error = false) {
   target.classList.toggle("error", error);
 }
 
-function visibleMachines() {
-  if (stage === "practice") return [{ name: "通常照合", rule: "normal" }];
-  return puzzle.machines;
-}
-
 function showProbeResult(item, recorded = false) {
-  const result = visibleMachines().map(machine => {
+  const result = currentMachines().map(machine => {
     const { hit, blow } = item.scores[machine.rule];
-    const resultName = stage === "practice" ? "" : machine.name + " ";
-    return resultName + hit + "H " + blow + "B";
+    return machine.name + " " + hit + "H " + blow + "B";
   });
   const code = item.code + (recorded ? "（記録済み）" : "");
   feedback("feedback", code + " → " + result.join(" ／ "));
 }
 
 function renderHistory(selected = "") {
-  const columns = visibleMachines();
+  const columns = currentMachines();
   const headings = document.createDocumentFragment();
 
   for (const name of ["入力", ...columns.map(machine => machine.name)]) {
@@ -381,6 +456,7 @@ function renderHistory(selected = "") {
     cell.scope = "col";
     cell.textContent = name;
     if (name === andName) cell.classList.add("and-col");
+    if (specialMachines.some(machine => machine.name === name)) cell.classList.add("special-col");
     headings.append(cell);
   }
   get("ledger-columns").replaceChildren(headings);
@@ -399,9 +475,10 @@ function renderHistory(selected = "") {
       const { hit, blow } = item.scores[machine.rule];
       const cell = row.insertCell();
       if (machine.name === andName) cell.classList.add("and-col");
+      if (machine.description) cell.classList.add("special-col");
       const result = cell.appendChild(document.createElement("span"));
       result.className = "score";
-      result.classList.toggle("perfect", hit === 4);
+      result.classList.toggle("perfect", hit === 4 && !machine.description);
       result.setAttribute("aria-label", hit + " ヒット、" + blow + " ブロー");
 
       const hitText = result.appendChild(document.createElement("span"));
@@ -416,44 +493,15 @@ function renderHistory(selected = "") {
   get("ledger-rows").replaceChildren(rows);
   get("count").textContent = history.length + " 件";
   get("ledger-empty").hidden = history.length !== 0;
-  get("connection").textContent = "接続中 " + columns.length + " 台";
 }
 
-function displayPracticeStep() {
-  const completed = history.length >= practice.probes.length;
-  const example = practice.probes.find(code => !history.some(item => item.code === code));
-  get("step").textContent = Math.min(history.length + 1, practice.probes.length) + " / " + practice.probes.length;
-  get("practice-prompt").hidden = completed;
-  get("main-prompt").hidden = !completed;
-  get("start-main").hidden = !completed;
-  if (example) {
-    const button = get("example-code");
-    button.textContent = example;
-    button.setAttribute("aria-label", "例 " + example + " を照合");
-  }
-}
-
-function displayStage(nextStage) {
-  stage = nextStage;
-  const training = stage === "practice";
-  const won = stage === "won";
-  get("stage-label").textContent = training ? "練習" : won ? "完了" : "本試験";
-  get("objective").textContent = training
-    ? "数字と桁の判定を、二つの入力で比べる。"
-    : won ? "" : "4桁の暗証番号と、各機の照合規則を突き止める。";
+function displayResult(won) {
   get("objective").hidden = won;
-  get("and-label").classList.toggle("is-active", !training);
   get("play-panel").hidden = won;
   get("win-panel").hidden = !won;
-  get("main-prompt").hidden = training;
-  get("step").hidden = !training;
-  get("notes").hidden = training || won;
-  get("open-confirm").hidden = training;
-  get("practice-prompt").hidden = !training;
-  get("start-main").hidden = true;
+  get("notes").hidden = won;
   probeInput.value = "";
   feedback("feedback");
-  if (training) displayPracticeStep();
   renderHistory();
 }
 
@@ -475,12 +523,16 @@ function submitProbe() {
     return;
   }
 
-  const secret = stage === "practice" ? practice.secret : puzzle.secret;
-  const ruleKeys = stage === "practice" ? ["normal"] : Object.keys(rules);
-  const scores = Object.fromEntries(ruleKeys.map(rule => [rule, score(code, secret, rule)]));
+  const scores = Object.fromEntries(
+    Object.keys(rules).map(rule => [rule, score(code, secret, rule)])
+  );
+  if (puzzle === hardPuzzle) {
+    const { hit, blow } = scores.normal;
+    scores.lie = { hit: blow, blow: 4 - hit - blow };
+    scores.random = legalPairs[Math.floor(Math.random() * legalPairs.length)];
+  }
   const item = { code, scores };
   history.push(item);
-  if (stage === "practice") displayPracticeStep();
   showProbeResult(item);
   probeInput.value = "";
   if (matchMedia("(pointer: coarse)").matches) probeInput.blur();
@@ -497,17 +549,6 @@ for (const input of [probeInput, confirmInput]) {
 get("probe-form").addEventListener("submit", event => {
   event.preventDefault();
   submitProbe();
-});
-get("example-code").addEventListener("click", event => {
-  probeInput.value = event.currentTarget.textContent;
-  submitProbe();
-  const next = get("start-main");
-  if (!next.hidden) next.focus({ preventScroll: true });
-});
-get("start-main").addEventListener("click", () => {
-  history = [];
-  displayStage("main");
-  get("open-confirm").focus({ preventScroll: true });
 });
 
 for (const [index, machine] of puzzle.machines.entries()) {
@@ -531,6 +572,7 @@ get("open-confirm").addEventListener("click", () => {
 get("close-confirm").addEventListener("click", () => dialog.close());
 get("confirm-form").addEventListener("submit", event => {
   event.preventDefault();
+  if (!dialog.open) return;
   const code = confirmInput.value;
   const issue = validate(code);
   if (issue) {
@@ -543,34 +585,74 @@ get("confirm-form").addEventListener("submit", event => {
     feedback("confirm-feedback", "三台に、それぞれ異なる規則を選んでください。", true);
     return;
   }
-  if (code !== puzzle.secret || puzzle.machines.some((machine, index) => machine.rule !== selected[index])) {
+  if (code !== secret || puzzle.machines.some((machine, index) => machine.rule !== selected[index])) {
     feedback("confirm-feedback", "暗証番号と照合規則の組が一致しません。", true);
     return;
   }
 
   dialog.close();
+  if (puzzle === normalPuzzle) countNormalClear();
   get("win-code").textContent = code;
   const answer = get("win-rules");
   answer.replaceChildren();
-  for (const machine of puzzle.machines) {
+  for (const machine of currentMachines()) {
     const term = answer.appendChild(document.createElement("dt"));
     term.textContent = machine.name;
     const value = answer.appendChild(document.createElement("dd"));
-    value.textContent = rules[machine.rule];
+    value.textContent = rules[machine.rule] ?? machine.description;
   }
-  displayStage("won");
+  get("win-message").textContent = puzzle === hardPuzzle
+    ? "ホラ吹機は、最後まで好き勝手に答えていました。"
+    : "三台とも、正しく答えていました。";
+  displayResult(true);
   get("win-heading").focus();
 });
 
-get("restart").addEventListener("click", () => {
+function resetRound() {
+  secret = drawAnswer(puzzle);
   history = [];
   get("confirm-form").reset();
-  get("hint").open = false;
-  displayStage("practice");
-  get("example-code").focus();
+  displayResult(false);
+}
+
+function setMode(nextPuzzle) {
+  puzzle = nextPuzzle;
+  const hard = puzzle === hardPuzzle;
+  const title = hard ? "Hit and Blowhard !" : "Hit and Blow .";
+  document.title = title;
+  get("game-title").textContent = title;
+  get("normal-wordmark").hidden = hard;
+  get("hard-wordmark").hidden = !hard;
+  get("return-normal").hidden = !hard;
+  get("locked-dot").hidden = normalClears >= requiredClears;
+  get("open-hard").hidden = normalClears < requiredClears;
+  get("hard-rules").hidden = !hard;
+  get("ledger").classList.toggle("hard-ledger", hard);
+  get("input-rules").textContent = hard
+    ? "重複可の4桁。暗証番号と入力に、回文（0990など）は使えません。"
+    : "重複なしの4桁。先頭に0を使えます。";
+  get("rule-intro").textContent = hard
+    ? "HIT・AND・BLOW機は、次の三つの規則を一台ずつ使います。"
+    : "三つの規則を一台ずつが使っています。";
+  get("connection").textContent = "接続中 " + currentMachines().length + " 台";
+  resetRound();
+}
+
+get("open-hard").addEventListener("click", () => {
+  if (normalClears < requiredClears) return;
+  setMode(hardPuzzle);
+  get("probe-heading").focus();
+});
+get("return-normal").addEventListener("click", () => {
+  setMode(normalPuzzle);
+  get("probe-heading").focus();
+});
+get("restart").addEventListener("click", () => {
+  resetRound();
+  get("probe-heading").focus();
 });
 
-displayStage("practice");
+setMode(normalPuzzle);
 get("game-board").hidden = false;
 get("game-footer").hidden = false;
 get("startup-message").hidden = true;
