@@ -71,11 +71,11 @@
     letter-spacing: -.035em;
     color: var(--lime);
   }
-  .title-punctuation { color: transparent; }
-  .title-punctuation::selection { color: var(--text); background: #43514c; }
+  .title-punctuation { margin-inline-start: -.1em; }
   .mode-dot {
     line-height: 1;
     padding: 0 .15em .13em;
+    margin-inline-start: clamp(5px, 1.4vw, 17px);
     min-width: 44px;
     min-height: 44px;
     border: 1px solid #67794a;
@@ -86,6 +86,15 @@
     font-size: .67em;
   }
   .mode-dot:hover { border-color: var(--lime); }
+  .mode-dot.is-unlocking { animation: detach-dot 600ms ease-out both; }
+  @keyframes detach-dot {
+    0% { transform: translateX(-.5em); border-color: transparent; background: transparent; color: var(--text); }
+    65% { transform: translateX(.1em); }
+    100% { transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mode-dot.is-unlocking { animation: none; }
+  }
   .hard-title { color: var(--copper); font-size: clamp(1.48rem, 6.5vw, 4.7rem); }
   .hard-title .and-label { color: var(--copper); }
   .objective { margin: 12px 0 0; line-height: 1.65; color: var(--muted); font-size: .93rem; }
@@ -370,13 +379,19 @@ function readNormalClears() {
 }
 
 function countNormalClear() {
+  const wasLocked = normalClears < requiredClears;
   normalClears = Math.max(normalClears, readNormalClears());
   if (normalClears < requiredClears) {
     normalClears++;
     try { localStorage.setItem(unlockKey, String(normalClears)); } catch {}
   }
-  get("locked-dot").hidden = normalClears >= requiredClears;
-  get("open-hard").hidden = normalClears < requiredClears;
+  const unlocked = normalClears >= requiredClears;
+  const justUnlocked = wasLocked && unlocked;
+  const button = get("open-hard");
+  get("locked-dot").hidden = unlocked;
+  button.hidden = !unlocked;
+  if (justUnlocked) button.classList.add("is-unlocking");
+  return justUnlocked;
 }
 
 function currentMachines() {
@@ -591,7 +606,7 @@ get("confirm-form").addEventListener("submit", event => {
   }
 
   dialog.close();
-  if (puzzle === normalPuzzle) countNormalClear();
+  const justUnlocked = puzzle === normalPuzzle && countNormalClear();
   get("win-code").textContent = code;
   const answer = get("win-rules");
   answer.replaceChildren();
@@ -605,7 +620,8 @@ get("confirm-form").addEventListener("submit", event => {
     ? "ホラ吹機は、最後まで好き勝手に答えていました。"
     : "三台とも、正しく答えていました。";
   displayResult(true);
-  get("win-heading").focus();
+  get("win-heading").focus({ preventScroll: justUnlocked });
+  if (justUnlocked) window.scrollTo(0, 0);
 });
 
 function resetRound() {
@@ -626,6 +642,7 @@ function setMode(nextPuzzle) {
   get("return-normal").hidden = !hard;
   get("locked-dot").hidden = normalClears >= requiredClears;
   get("open-hard").hidden = normalClears < requiredClears;
+  get("open-hard").classList.remove("is-unlocking");
   get("hard-rules").hidden = !hard;
   get("ledger").classList.toggle("hard-ledger", hard);
   get("input-rules").textContent = hard
