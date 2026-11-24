@@ -63,40 +63,13 @@
     letter-spacing: -.055em;
     white-space: nowrap;
   }
-  .and-label, .and-trigger {
+  .and-label {
     font: inherit;
     font-size: .53em;
     letter-spacing: -.035em;
     color: #bfcac7;
   }
-  .and-trigger {
-    position: relative;
-    background: transparent;
-    padding: 4px 7px 6px;
-    margin: 0 -3px;
-    border: 1px solid transparent;
-    border-bottom-color: #596766;
-    border-radius: 4px;
-    min-height: 44px;
-    line-height: 1;
-  }
-  .and-trigger::after {
-    content: "";
-    display: inline-block;
-    margin-left: .18em;
-    width: .14em;
-    height: .14em;
-    border-bottom: 1px solid currentColor;
-    border-right: 1px solid currentColor;
-    vertical-align: .17em;
-    transform: rotate(45deg);
-  }
-  .and-trigger:hover, .and-trigger[aria-expanded="true"] {
-    background: var(--lime-dark);
-    color: var(--lime);
-    border-color: #667447;
-  }
-  .and-trigger[aria-expanded="true"]::after { transform: rotate(225deg); }
+  .and-label.is-active { color: var(--lime); }
   .objective { margin: 12px 0 0; line-height: 1.65; color: var(--muted); font-size: .93rem; }
   .board {
     display: grid;
@@ -179,11 +152,14 @@
   .and-col { background: #20291d; }
   tbody tr.is-selected th, tbody tr.is-selected td { box-shadow: inset 0 -2px #768c42; background-color: #2a3322; }
   .empty { margin: 0; padding: 22px 16px; color: var(--muted); text-align: center; }
-  details + details { border-top: 1px solid var(--edge); }
+  .rule-heading { padding: 12px 15px 0; }
+  .rule-intro { color: var(--muted); margin: 4px 15px 7px; font-size: .85rem; line-height: 1.5; }
+  .notes > details { border-top: 1px solid var(--edge); }
   summary { min-height: 44px; padding: 12px 15px; font-size: .86rem; font-weight: 650; }
   summary::marker { color: var(--lime); }
   details p, dl { margin: 3px 15px 13px; }
-  .rule-list { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 7px 8px; align-items: baseline; }
+  .rule-list { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 4px 8px; align-items: baseline; }
+  .rule-list dd { line-height: 1.5; }
   dt { font-size: .85rem; font-weight: 650; }
   dd { color: var(--muted); margin: 0; }
   .hint { color: var(--muted); }
@@ -251,7 +227,7 @@
     </div>
     <h1 class="sr-only">HIT AND BLOW</h1>
     <div class="wordmark">
-      <span aria-hidden="true">HIT</span><span class="and-label" aria-hidden="true" id="and-label">AND</span><button type="button" class="and-trigger" id="and-trigger" aria-expanded="false" aria-controls="ledger-table" hidden>AND</button><span aria-hidden="true">BLOW</span>
+      <span aria-hidden="true">HIT</span><span class="and-label" aria-hidden="true" id="and-label">AND</span><span aria-hidden="true">BLOW</span>
     </div>
     <p class="objective" id="objective" hidden>数字と桁の判定を、二つの入力で比べる。</p>
   </header>
@@ -282,27 +258,21 @@
       <h2 id="win-heading" tabindex="-1">照合完了</h2>
       <p class="win-code" id="win-code"></p>
       <dl class="win-rules" id="win-rules"></dl>
-      <p class="win-line">二台とも、正しく答えていました。</p>
+      <p class="win-line">三台とも、正しく答えていました。</p>
       <button type="button" class="button full" id="restart">練習からやり直す</button>
     </section>
 
     <aside class="panel notes" id="notes" hidden aria-label="規則とヒント">
-      <details id="rules">
-        <summary>照合規則</summary>
-        <p>三つの規則を一台ずつが使っています。</p>
-        <dl class="rule-list">
-          <dt>通常</dt><dd>入力を暗証番号とそのまま比べる。</dd>
-          <dt>逆順</dt><dd>暗証番号を逆順にしてから、入力と比べる。</dd>
-          <dt>＋1</dt><dd>入力の全桁を一つずつ進めてから、暗証番号と比べる。9の次は0。</dd>
-        </dl>
-      </details>
+      <h2 class="rule-heading" id="rules">照合規則</h2>
+      <p class="rule-intro">三つの規則を一台ずつが使っています。</p>
+      <dl class="rule-list">
+        <dt>通常</dt><dd>入力を暗証番号とそのまま比べる。</dd>
+        <dt>逆順</dt><dd>暗証番号を逆順にして入力と比べる。</dd>
+        <dt>＋1</dt><dd>入力の各桁に1を足して照合。9の次は0。</dd>
+      </dl>
       <details id="hint">
         <summary>ヒント</summary>
-        <p class="hint">表示されている結果欄の数を確認してください。</p>
-        <details id="hint-more">
-          <summary>もう一つ見る</summary>
-          <p class="hint">暗証番号を逆順にし、通常と逆順の担当も入れ替えると、左右二台の判定はどうなるでしょう？</p>
-        </details>
+        <p class="hint">同じ4桁を逆順に並べて、元の入力と判定を見比べてみよう。</p>
       </details>
     </aside>
 
@@ -320,9 +290,8 @@
   </div>
 
   <footer class="footer" id="game-footer" hidden>
-    <span class="connection" id="connection">接続中 1 台 ／ 表示中 1 台</span>
+    <span class="connection" id="connection">接続中 1 台</span>
   </footer>
-  <p id="and-announcement" class="sr-only" role="status"></p>
 </main>
 
 <dialog id="confirm-dialog" aria-labelledby="confirm-title">
@@ -358,11 +327,9 @@ const get = id => document.getElementById(id);
 const probeInput = get("probe-code");
 const confirmInput = get("confirm-code");
 const dialog = get("confirm-dialog");
-const andTrigger = get("and-trigger");
 const andName = "AND機";
 
 let stage = "practice";
-let andVisible = false;
 let history = [];
 
 function score(guess, secret, rule) {
@@ -392,7 +359,7 @@ function feedback(id, message = "", error = false) {
 
 function visibleMachines() {
   if (stage === "practice") return [{ name: "通常照合", rule: "normal" }];
-  return puzzle.machines.filter(machine => machine.name !== andName || andVisible);
+  return puzzle.machines;
 }
 
 function showProbeResult(item, recorded = false) {
@@ -449,9 +416,7 @@ function renderHistory(selected = "") {
   get("ledger-rows").replaceChildren(rows);
   get("count").textContent = history.length + " 件";
   get("ledger-empty").hidden = history.length !== 0;
-  get("connection").textContent = stage === "practice"
-    ? "接続中 1 台 ／ 表示中 1 台"
-    : "接続中 3 台 ／ 表示中 " + columns.length + " 台";
+  get("connection").textContent = "接続中 " + columns.length + " 台";
 }
 
 function displayPracticeStep() {
@@ -477,9 +442,7 @@ function displayStage(nextStage) {
     ? "数字と桁の判定を、二つの入力で比べる。"
     : won ? "" : "4桁の暗証番号と、各機の照合規則を突き止める。";
   get("objective").hidden = won;
-  get("and-label").hidden = !training;
-  andTrigger.hidden = training;
-  andTrigger.setAttribute("aria-expanded", String(andVisible));
+  get("and-label").classList.toggle("is-active", !training);
   get("play-panel").hidden = won;
   get("win-panel").hidden = !won;
   get("main-prompt").hidden = training;
@@ -546,15 +509,6 @@ get("start-main").addEventListener("click", () => {
   displayStage("main");
   get("open-confirm").focus({ preventScroll: true });
 });
-andTrigger.addEventListener("click", () => {
-  andVisible = !andVisible;
-  andTrigger.setAttribute("aria-expanded", String(andVisible));
-  feedback("feedback");
-  renderHistory();
-  get("and-announcement").textContent = andVisible
-    ? "AND機の判定を表示しました。照合履歴は " + history.length + " 件あります。"
-    : "AND機の判定を閉じました。";
-});
 
 for (const [index, machine] of puzzle.machines.entries()) {
   const label = document.createElement("label");
@@ -569,10 +523,6 @@ for (const [index, machine] of puzzle.machines.entries()) {
 }
 
 get("open-confirm").addEventListener("click", () => {
-  if (!andVisible) {
-    feedback("feedback", "確定には、接続中の全台の規則が必要です。", true);
-    return;
-  }
   feedback("confirm-feedback");
   if (!confirmInput.value && !validate(probeInput.value)) confirmInput.value = probeInput.value;
   dialog.showModal();
@@ -614,10 +564,8 @@ get("confirm-form").addEventListener("submit", event => {
 
 get("restart").addEventListener("click", () => {
   history = [];
-  andVisible = false;
   get("confirm-form").reset();
-  for (const detail of get("notes").querySelectorAll("details")) detail.open = false;
-  get("and-announcement").textContent = "";
+  get("hint").open = false;
   displayStage("practice");
   get("example-code").focus();
 });
@@ -629,4 +577,3 @@ get("startup-message").hidden = true;
 </script>
 </body>
 </html>
-
