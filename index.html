@@ -71,7 +71,18 @@
     letter-spacing: -.035em;
     color: var(--lime);
   }
-  .title-punctuation { margin-inline-start: -.1em; }
+  .title-punctuation {
+    position: relative;
+    margin-inline-start: -.1em;
+    padding: 0;
+    min-height: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    letter-spacing: inherit;
+    cursor: inherit;
+  }
+  .title-punctuation::before { content: ""; position: absolute; inset: -6px -10px; }
   .mode-dot {
     line-height: 1;
     padding: 0 .15em .13em;
@@ -164,8 +175,6 @@
   .score { display: inline-flex; gap: .26em; align-items: baseline; white-space: nowrap; font: 650 clamp(.78rem, 3.45vw, 1.05rem) var(--mono); }
   .score.perfect { background: var(--lime-dark); padding: 3px 4px; border-radius: 4px; outline: 1px solid #52643c; }
   .and-col { background: #20291d; }
-  .special-col { background: #28232a; }
-  thead th.special-col { color: var(--copper); }
   .hard-rules { grid-template-columns: 4.25rem minmax(0, 1fr); }
   tbody tr.is-selected th, tbody tr.is-selected td { box-shadow: inset 0 -2px #768c42; background-color: #2a3322; }
   .empty { margin: 0; padding: 22px 16px; color: var(--muted); text-align: center; }
@@ -245,7 +254,7 @@
     </div>
     <h1 class="sr-only" id="game-title">Hit and Blow .</h1>
     <div class="wordmark" id="normal-wordmark">
-      <span aria-hidden="true">Hit</span> <span class="and-label" aria-hidden="true">and</span> <span aria-hidden="true">Blow</span> <span class="title-punctuation" id="locked-dot" aria-hidden="true">.</span>
+      <span aria-hidden="true">Hit</span> <span class="and-label" aria-hidden="true">and</span> <span aria-hidden="true">Blow</span> <button class="title-punctuation" id="locked-dot" type="button" aria-label="裏モードを開く">.</button>
       <button class="mode-dot" id="open-hard" type="button" aria-label="裏モードを開く" hidden>.</button>
     </div>
     <div class="wordmark hard-title" id="hard-wordmark" aria-hidden="true" hidden>
@@ -330,7 +339,9 @@
 <script>
 "use strict";
 
+const rules = { normal: "通常", reverse: "逆順", plus: "＋1" };
 const normalPuzzle = {
+  roles: rules,
   machines: [
     { name: "HIT機", rule: "normal" },
     { name: "AND機", rule: "plus" },
@@ -338,17 +349,14 @@ const normalPuzzle = {
   ]
 };
 const hardPuzzle = {
-  machines: [
-    { name: "HIT機", rule: "reverse" },
-    { name: "AND機", rule: "normal" },
-    { name: "BLOW機", rule: "plus" }
-  ]
+  roles: {
+    normal: "AND機（通常）",
+    reverse: "HIT機（逆順）",
+    plus: "BLOW機（＋1）",
+    lie: "嘘つ機",
+    random: "ホラ吹機"
+  }
 };
-const specialMachines = [
-  { name: "嘘つ機", rule: "lie", description: "見当違いの判定" },
-  { name: "ホラ吹機", rule: "random", description: "でたらめ" }
-];
-const rules = { normal: "通常", reverse: "逆順", plus: "＋1" };
 const legalPairs = [];
 for (let hit = 0; hit <= 4; hit++) {
   for (let blow = 0; blow <= 4 - hit; blow++) {
@@ -364,6 +372,7 @@ const dialog = get("confirm-dialog");
 const andName = "AND機";
 
 let puzzle = normalPuzzle;
+let machines = normalPuzzle.machines;
 let secret = "";
 const lastAnswers = new Map();
 let history = [];
@@ -394,8 +403,17 @@ function countNormalClear() {
   return justUnlocked;
 }
 
-function currentMachines() {
-  return puzzle === hardPuzzle ? [...puzzle.machines, ...specialMachines] : puzzle.machines;
+function drawHardMachines() {
+  const order = Object.keys(hardPuzzle.roles);
+  for (let index = order.length - 1; index > 0; index--) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [order[index], order[other]] = [order[other], order[index]];
+  }
+  return order.map((rule, index) => ({ name: (index + 1) + "号機", rule }));
+}
+
+function machineLabel(machine) {
+  return puzzle === hardPuzzle ? machine.name + " ？" : machine.name;
 }
 
 function score(guess, secret, rule) {
@@ -454,24 +472,22 @@ function feedback(id, message = "", error = false) {
 }
 
 function showProbeResult(item, recorded = false) {
-  const result = currentMachines().map(machine => {
+  const result = machines.map(machine => {
     const { hit, blow } = item.scores[machine.rule];
-    return machine.name + " " + hit + "H " + blow + "B";
+    return machineLabel(machine) + " " + hit + "H " + blow + "B";
   });
   const code = item.code + (recorded ? "（記録済み）" : "");
   feedback("feedback", code + " → " + result.join(" ／ "));
 }
 
 function renderHistory(selected = "") {
-  const columns = currentMachines();
   const headings = document.createDocumentFragment();
 
-  for (const name of ["入力", ...columns.map(machine => machine.name)]) {
+  for (const name of ["入力", ...machines.map(machineLabel)]) {
     const cell = document.createElement("th");
     cell.scope = "col";
     cell.textContent = name;
     if (name === andName) cell.classList.add("and-col");
-    if (specialMachines.some(machine => machine.name === name)) cell.classList.add("special-col");
     headings.append(cell);
   }
   get("ledger-columns").replaceChildren(headings);
@@ -486,14 +502,13 @@ function renderHistory(selected = "") {
     code.scope = "row";
     code.textContent = item.code;
 
-    for (const machine of columns) {
+    for (const machine of machines) {
       const { hit, blow } = item.scores[machine.rule];
       const cell = row.insertCell();
       if (machine.name === andName) cell.classList.add("and-col");
-      if (machine.description) cell.classList.add("special-col");
       const result = cell.appendChild(document.createElement("span"));
       result.className = "score";
-      result.classList.toggle("perfect", hit === 4 && !machine.description);
+      result.classList.toggle("perfect", hit === 4 && puzzle === normalPuzzle);
       result.setAttribute("aria-label", hit + " ヒット、" + blow + " ブロー");
 
       const hitText = result.appendChild(document.createElement("span"));
@@ -566,16 +581,20 @@ get("probe-form").addEventListener("submit", event => {
   submitProbe();
 });
 
-for (const [index, machine] of puzzle.machines.entries()) {
-  const label = document.createElement("label");
-  label.className = "select-row";
-  const name = label.appendChild(document.createElement("span"));
-  name.textContent = machine.name;
-  const select = label.appendChild(document.createElement("select"));
-  select.id = "machine-" + index;
-  select.add(new Option("規則を選ぶ", ""));
-  for (const [key, name] of Object.entries(rules)) select.add(new Option(name, key));
-  get("assignments").append(label);
+function renderAssignments() {
+  const fields = document.createDocumentFragment();
+  for (const [index, machine] of machines.entries()) {
+    const label = document.createElement("label");
+    label.className = "select-row";
+    const name = label.appendChild(document.createElement("span"));
+    name.textContent = machineLabel(machine);
+    const select = label.appendChild(document.createElement("select"));
+    select.id = "machine-" + index;
+    select.add(new Option(puzzle === hardPuzzle ? "正体を選ぶ" : "規則を選ぶ", ""));
+    for (const [key, title] of Object.entries(puzzle.roles)) select.add(new Option(title, key));
+    fields.append(label);
+  }
+  get("assignments").replaceChildren(fields);
 }
 
 get("open-confirm").addEventListener("click", () => {
@@ -595,13 +614,17 @@ get("confirm-form").addEventListener("submit", event => {
     confirmInput.focus();
     return;
   }
-  const selected = puzzle.machines.map((_, index) => get("machine-" + index).value);
-  if (selected.includes("") || new Set(selected).size !== puzzle.machines.length) {
-    feedback("confirm-feedback", "三台に、それぞれ異なる規則を選んでください。", true);
+  const selected = machines.map((_, index) => get("machine-" + index).value);
+  if (selected.includes("") || new Set(selected).size !== machines.length) {
+    feedback("confirm-feedback", puzzle === hardPuzzle
+      ? "五台に、それぞれ異なる正体を選んでください。"
+      : "三台に、それぞれ異なる規則を選んでください。", true);
     return;
   }
-  if (code !== secret || puzzle.machines.some((machine, index) => machine.rule !== selected[index])) {
-    feedback("confirm-feedback", "暗証番号と照合規則の組が一致しません。", true);
+  if (code !== secret || machines.some((machine, index) => machine.rule !== selected[index])) {
+    feedback("confirm-feedback", puzzle === hardPuzzle
+      ? "暗証番号と機械の正体の組が一致しません。"
+      : "暗証番号と照合規則の組が一致しません。", true);
     return;
   }
 
@@ -610,11 +633,11 @@ get("confirm-form").addEventListener("submit", event => {
   get("win-code").textContent = code;
   const answer = get("win-rules");
   answer.replaceChildren();
-  for (const machine of currentMachines()) {
+  for (const machine of machines) {
     const term = answer.appendChild(document.createElement("dt"));
     term.textContent = machine.name;
     const value = answer.appendChild(document.createElement("dd"));
-    value.textContent = rules[machine.rule] ?? machine.description;
+    value.textContent = puzzle.roles[machine.rule];
   }
   get("win-message").textContent = puzzle === hardPuzzle
     ? "ホラ吹機は、最後まで好き勝手に答えていました。"
@@ -626,8 +649,10 @@ get("confirm-form").addEventListener("submit", event => {
 
 function resetRound() {
   secret = drawAnswer(puzzle);
+  machines = puzzle === hardPuzzle ? drawHardMachines() : normalPuzzle.machines;
   history = [];
   get("confirm-form").reset();
+  renderAssignments();
   displayResult(false);
 }
 
@@ -649,17 +674,21 @@ function setMode(nextPuzzle) {
     ? "重複可の4桁。暗証番号と入力に、回文（0990など）は使えません。"
     : "重複なしの4桁。先頭に0を使えます。";
   get("rule-intro").textContent = hard
-    ? "HIT・AND・BLOW機は、次の三つの規則を一台ずつ使います。"
+    ? "五台が、以下の五つの規則を一台ずつ使います。どの台がどの機械か突き止めてください。"
     : "三つの規則を一台ずつが使っています。";
-  get("connection").textContent = "接続中 " + currentMachines().length + " 台";
+  const confirmTitle = hard ? "暗証番号と機械の正体を確定" : "暗証番号と規則を確定";
+  get("open-confirm").textContent = confirmTitle;
+  get("confirm-title").textContent = confirmTitle;
   resetRound();
+  get("connection").textContent = "接続中 " + machines.length + " 台";
 }
 
-get("open-hard").addEventListener("click", () => {
-  if (normalClears < requiredClears) return;
-  setMode(hardPuzzle);
-  get("probe-heading").focus();
-});
+for (const id of ["locked-dot", "open-hard"]) {
+  get(id).addEventListener("click", () => {
+    setMode(hardPuzzle);
+    get("probe-heading").focus();
+  });
+}
 get("return-normal").addEventListener("click", () => {
   setMode(normalPuzzle);
   get("probe-heading").focus();
